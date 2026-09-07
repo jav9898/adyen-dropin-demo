@@ -49,7 +49,7 @@ The Adyen Web library is installed via **npm** (`@adyen/adyen-web`) and imported
 ### 1. Clone and Setup
 ```bash
 # Navigate to project directory
-cd /Users/javierdoong/test2
+cd /Users/...
 # Install backend dependencies
 cd backend
 npm install
@@ -90,13 +90,11 @@ ngrok http 3001
 ### 4. Access the Demo
 - **Frontend**: http://localhost:8080
 - **Backend API**: http://localhost:3001
-- **Health Check**: http://localhost:3001/health
 
 ## 🔧 API Endpoints
 ### Backend Endpoints
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/health` | Health check endpoint |
 | GET | `/api/config` | Get Adyen configuration (client key, environment) |
 | POST | `/api/sessions` | Create a new payment session |
 | GET | `/api/sessions/:sessionId` | Get session details |
@@ -305,15 +303,14 @@ Use these test card numbers to simulate different payment scenarios:
 | Card Number | Brand | Result |
 |-------------|-------|--------|
 | 4111 1111 1111 1111 | Visa | Authorised |
-| 5425 2345 6789 0123 | Mastercard | Authorised |
-| 4222 2222 2222 2222 | Visa | Refused |
-| 3782 822463 10005 | American Express | Authorised |
+| 2222 4107 4036 0010 | Mastercard | Authorised |
+| 3700 0000 0000 002 | American Express | Authorised |
 
 ### Testing 3D Secure
 To test 3D Secure authentication:
-1. Use card: 4012 0000 0000 0088
-2. Use any future expiry date
-3. Use any 3-digit CVC
+1. Use card: 3714 4963 5398 431
+2. Expiry date: 03/30
+3. CVC: 737
 4. Enter any 3D Secure password when prompted
 
 ### Testing Webhooks
@@ -328,7 +325,7 @@ ngrok http 3001
 
 ## 📁 Project Structure
 ```
-test2/
+adyen-dropin-demo-main/
 ├── backend/
 │   ├── server.js              # Express server: sessions, capture/cancel/refund, webhook handling
 │   ├── package.json           # Backend dependencies
