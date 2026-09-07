@@ -15,23 +15,23 @@ This demo demonstrates:
 ```
 ┌─────────────────┐     HTTP Request     ┌─────────────────┐
 │   Frontend      │ ───────────────────> │   Backend       │
-│   (Port 8080)   │                     │   (Port 3001)   │
-└─────────────────┘                     └─────────────────┘
+│   (Port 8080)   │                      │   (Port 3001)   │
+└─────────────────┘                      └─────────────────┘
                                                  │
                                                  │ Adyen API
                                                  ▼
-┌─────────────────┐                    ┌─────────────────┐
-│   Adyen Drop-in │                    │   Adyen API     │
-│   (via npm)     │                    │   (Checkout)    │
-└─────────────────┘                    └─────────────────┘
+┌─────────────────┐                     ┌─────────────────┐
+│   Adyen Drop-in │                     │   Adyen API     │
+│   (via npm)     │                     │   (Checkout)    │
+└─────────────────┘                     └─────────────────┘
                                                  │
                                                  │ Webhook (HMAC-verified,
                                                  │ deduplicated)
                                                  ▼
-┌─────────────────┐                    ┌─────────────────┐
+┌─────────────────┐                     ┌─────────────────┐
 │   Payment       │ <────────────────── │   Backend       │
 │   Result Page   │                     │   Webhook       │
-└─────────────────┘                    └─────────────────┘
+└─────────────────┘                     └─────────────────┘
 ```
 
 The Adyen Web library is installed via **npm** (`@adyen/adyen-web`) and imported as a real ES module — not loaded from a CDN. Its dist files use only relative internal imports, so `http-server` can serve `node_modules` statically and the browser resolves everything natively, with no bundler required.
@@ -381,9 +381,8 @@ This demo uses test credentials and is for educational purposes. What's already 
 - For capture/cancel/refund specifically, webhooks can take anywhere from a few seconds up to roughly a minute over ngrok — the UI polls for up to 60 seconds before offering a manual "check status" retry
 
 ## 📚 Additional Resources
-- [Adyen Sessions Flow Documentation](https://docs.adyen.com/online-payments/build-your-integration/sessions-flow)
+- [Adyen Sessions Flow Documentation](https://docs.adyen.com/online-payments/build-your-integration/sessions-flow?platform=Web&integration=Drop-in&version=6.41.1)
 - [Adyen API Explorer](https://docs.adyen.com/api-explorer)
-- [Adyen Web Drop-in Documentation](https://docs.adyen.com/online-payments/build-your-integration/sessions-flow/web-drop-in)
 - [Adyen Test Cards](https://docs.adyen.com/development-resources/test-cards-and-credentials/test-card-numbers)
 - [Adyen Currency Codes](https://docs.adyen.com/development-resources/currency-codes)
 - [Verify HMAC Signatures](https://docs.adyen.com/development-resources/webhooks/secure-webhooks/verify-hmac-signatures)
