@@ -1,0 +1,15 @@
+{
+  "name": "adyen-sessions-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Adyen Sessions flow integration demo",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -c-1 --cors"
+  },
+  "dependencies": {
+    "@adyen/adyen-web": "^6.44.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

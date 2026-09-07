@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adyen Sessions Flow Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .amount-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .amount-row>div {
+            flex: 1;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #dropin-container {
+            margin-top: 30px;
+            min-height: 400px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .info-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .session-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #2c5282;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+    <link rel="stylesheet" href="/node_modules/@adyen/adyen-web/dist/es/adyen.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Adyen Sessions Flow Demo</h1>
+        <p class="subtitle">Complete payment integration using Adyen Sessions API with Web Drop-in</p>
+
+        <div id="error-message" class="error hidden"></div>
+        <div id="success-message" class="success hidden"></div>
+
+        <div id="payment-form">
+            <div class="form-group">
+                <label for="amount">Amount</label>
+                <div class="amount-row">
+                    <div>
+                        <input type="number" id="amount" value="10.00" min="0.01" step="0.01">
+                    </div>
+                    <div>
+                        <select id="currency" onchange="updateAmountInputStep()">
+                            <option value="AED" data-decimals="2">AED - UAE Dirham</option>
+                            <option value="ALL" data-decimals="2">ALL - Albanian Lek</option>
+                            <option value="AMD" data-decimals="2">AMD - Armenian Dram</option>
+                            <option value="AOA" data-decimals="2">AOA - Angolan Kwanza</option>
+                            <option value="ARS" data-decimals="2">ARS - Nuevo Argentine Peso</option>
+                            <option value="AUD" data-decimals="2">AUD - Australian Dollar</option>
+                            <option value="AWG" data-decimals="2">AWG - Aruban Guilder</option>
+                            <option value="AZN" data-decimals="2">AZN - Azerbaijani Manat</option>
+                            <option value="BAM" data-decimals="2">BAM - Bosnia-Herzegovina Convertible Marks</option>
+                            <option value="BBD" data-decimals="2">BBD - Barbados Dollar</option>
+                            <option value="BDT" data-decimals="2">BDT - Bangladesh Taka</option>
+                            <option value="BHD" data-decimals="3">BHD - Bahraini Dinar</option>
+                            <option value="BMD" data-decimals="2">BMD - Bermudian Dollar</option>
+                            <option value="BND" data-decimals="2">BND - Brunei Dollar</option>
+                            <option value="BOB" data-decimals="2">BOB - Bolivia Boliviano</option>
+                            <option value="BRL" data-decimals="2">BRL - Brazilian Real</option>
+                            <option value="BSD" data-decimals="2">BSD - Bahamian Dollar</option>
+                            <option value="BWP" data-decimals="2">BWP - Botswana Pula</option>
+                            <option value="BYN" data-decimals="2">BYN - New Belarusian Ruble</option>
+                            <option value="BZD" data-decimals="2">BZD - Belize Dollar</option>
+                            <option value="CAD" data-decimals="2">CAD - Canadian Dollar</option>
+                            <option value="CHF" data-decimals="2">CHF - Swiss Franc</option>
+                            <option value="CLP" data-decimals="2">CLP - Chilean Peso</option>
+                            <option value="CNH" data-decimals="2">CNH - Yuan Renminbi (offshore)</option>
+                            <option value="CNY" data-decimals="2">CNY - Yuan Renminbi (onshore)</option>
+                            <option value="COP" data-decimals="2">COP - Colombian Peso</option>
+                            <option value="CRC" data-decimals="2">CRC - Costa Rican Colon</option>
+                            <option value="CUP" data-decimals="2">CUP - Cuban Peso</option>
+                            <option value="CVE" data-decimals="0">CVE - Cape Verdi Escudo</option>
+                            <option value="CZK" data-decimals="2">CZK - Czech Koruna</option>
+                            <option value="DJF" data-decimals="0">DJF - Djibouti Franc</option>
+                            <option value="DKK" data-decimals="2">DKK - Danish Krone</option>
+                            <option value="DOP" data-decimals="2">DOP - Dominican Republic Peso</option>
+                            <option value="DZD" data-decimals="2">DZD - Algerian Dinar</option>
+                            <option value="EGP" data-decimals="2">EGP - Egyptian Pound</option>
+                            <option value="ETB" data-decimals="2">ETB - Ethiopian Birr</option>
+                            <option value="EUR" data-decimals="2" selected>EUR - Euro</option>
+                            <option value="FJD" data-decimals="2">FJD - Fiji Dollar</option>
+                            <option value="FKP" data-decimals="2">FKP - Falkland Islands Pound</option>
+                            <option value="GBP" data-decimals="2">GBP - Pound Sterling</option>
+                            <option value="GEL" data-decimals="2">GEL - Georgian Lari</option>
+                            <option value="GHS" data-decimals="2">GHS - Ghanaian Cedi</option>
+                            <option value="GIP" data-decimals="2">GIP - Gibraltar Pound</option>
+                            <option value="GMD" data-decimals="2">GMD - Gambia Delasi</option>
+                            <option value="GNF" data-decimals="0">GNF - Guinea Franc</option>
+                            <option value="GTQ" data-decimals="2">GTQ - Guatemala Quetzal</option>
+                            <option value="GYD" data-decimals="2">GYD - Guyanese Dollar</option>
+                            <option value="HKD" data-decimals="2">HKD - Hong Kong Dollar</option>
+                            <option value="HNL" data-decimals="2">HNL - Honduras Lempira</option>
+                            <option value="HTG" data-decimals="2">HTG - Haitian Gourde</option>
+                            <option value="HUF" data-decimals="2">HUF - Hungarian Forint</option>
+                            <option value="IDR" data-decimals="0">IDR - Indonesian Rupiah</option>
+                            <option value="ILS" data-decimals="2">ILS - New Israeli Scheqel</option>
+                            <option value="INR" data-decimals="2">INR - Indian Rupee</option>
+                            <option value="IQD" data-decimals="3">IQD - Iraqi Dinar</option>
+                            <option value="ISK" data-decimals="2">ISK - Iceland Krona</option>
+                            <option value="JMD" data-decimals="2">JMD - Jamaican Dollar</option>
+                            <option value="JOD" data-decimals="3">JOD - Jordanian Dinar</option>
+                            <option value="JPY" data-decimals="0">JPY - Japanese Yen</option>
+                            <option value="KES" data-decimals="2">KES - Kenyan Shilling</option>
+                            <option value="KGS" data-decimals="2">KGS - Kyrgyzstan Som</option>
+                            <option value="KHR" data-decimals="2">KHR - Cambodia Riel</option>
+                            <option value="KMF" data-decimals="0">KMF - Comoro Franc</option>
+                            <option value="KRW" data-decimals="0">KRW - South-Korean Won</option>
+                            <option value="KWD" data-decimals="3">KWD - Kuwaiti Dinar</option>
+                            <option value="KYD" data-decimals="2">KYD - Cayman Islands Dollar</option>
+                            <option value="KZT" data-decimals="2">KZT - Kazakhstani Tenge</option>
+                            <option value="LAK" data-decimals="2">LAK - Laos Kip</option>
+                            <option value="LKR" data-decimals="2">LKR - Sri Lanka Rupee</option>
+                            <option value="LYD" data-decimals="3">LYD - Libyan Dinar</option>
+                            <option value="MAD" data-decimals="2">MAD - Moroccan Dirham</option>
+                            <option value="MDL" data-decimals="2">MDL - Moldovia Leu</option>
+                            <option value="MKD" data-decimals="2">MKD - Macedonian Denar</option>
+                            <option value="MMK" data-decimals="2">MMK - Myanmar Kyat</option>
+                            <option value="MNT" data-decimals="2">MNT - Mongolia Tugrik</option>
+                            <option value="MOP" data-decimals="2">MOP - Macau Pataca</option>
+                            <option value="MRU" data-decimals="2">MRU - Mauritania Ouguiya</option>
+                            <option value="MUR" data-decimals="2">MUR - Mauritius Rupee</option>
+                            <option value="MVR" data-decimals="2">MVR - Maldives Rufiyaa</option>
+                            <option value="MWK" data-decimals="2">MWK - Malawi Kwacha</option>
+                            <option value="MXN" data-decimals="2">MXN - Mexican Peso</option>
+                            <option value="MYR" data-decimals="2">MYR - Malaysian Ringgit</option>
+                            <option value="MZN" data-decimals="2">MZN - Mozambican Metical</option>
+                            <option value="NAD" data-decimals="2">NAD - Namibian Dollar</option>
+                            <option value="NGN" data-decimals="2">NGN - Nigerian Naira</option>
+                            <option value="NIO" data-decimals="2">NIO - Nicaragua Cordoba Oro</option>
+                            <option value="NOK" data-decimals="2">NOK - Norwegian Krone</option>
+                            <option value="NPR" data-decimals="2">NPR - Nepalese Rupee</option>
+                            <option value="NZD" data-decimals="2">NZD - New Zealand Dollar</option>
+                            <option value="OMR" data-decimals="3">OMR - Rial Omani</option>
+                            <option value="PAB" data-decimals="2">PAB - Panamanian Balboa</option>
+                            <option value="PEN" data-decimals="2">PEN - Peruvian Nuevo Sol</option>
+                            <option value="PGK" data-decimals="2">PGK - New Guinea Kina</option>
+                            <option value="PHP" data-decimals="2">PHP - Philippine Peso</option>
+                            <option value="PKR" data-decimals="2">PKR - Pakistan Rupee</option>
+                            <option value="PLN" data-decimals="2">PLN - New Polish Zloty</option>
+                            <option value="PYG" data-decimals="0">PYG - Paraguay Guarani</option>
+                            <option value="QAR" data-decimals="2">QAR - Qatari Rial</option>
+                            <option value="RON" data-decimals="2">RON - New Romanian Lei</option>
+                            <option value="RSD" data-decimals="2">RSD - Serbian Dinar</option>
+                            <option value="RUB" data-decimals="2">RUB - Russian Ruble</option>
+                            <option value="RWF" data-decimals="0">RWF - Rwanda Franc</option>
+                            <option value="SAR" data-decimals="2">SAR - Saudi Riyal</option>
+                            <option value="SBD" data-decimals="2">SBD - Solomon Island Dollar</option>
+                            <option value="SCR" data-decimals="2">SCR - Seychelles Rupee</option>
+                            <option value="SEK" data-decimals="2">SEK - Swedish Krone</option>
+                            <option value="SGD" data-decimals="2">SGD - Singapore Dollar</option>
+                            <option value="SHP" data-decimals="2">SHP - St. Helena Pound</option>
+                            <option value="SLE" data-decimals="2">SLE - Sierra Leone Leone</option>
+                            <option value="SOS" data-decimals="2">SOS - Somalia Shilling</option>
+                            <option value="SRD" data-decimals="2">SRD - Surinamese Dollar</option>
+                            <option value="STN" data-decimals="2">STN - Sao Tome & Principe Dobra</option>
+                            <option value="SVC" data-decimals="2">SVC - El Salvador Colón</option>
+                            <option value="SZL" data-decimals="2">SZL - Swaziland Lilangeni</option>
+                            <option value="THB" data-decimals="2">THB - Thai Baht</option>
+                            <option value="TND" data-decimals="3">TND - Tunisian Dinar</option>
+                            <option value="TOP" data-decimals="2">TOP - Tonga Pa'anga</option>
+                            <option value="TRY" data-decimals="2">TRY - New Turkish Lira</option>
+                            <option value="TTD" data-decimals="2">TTD - Trinidad & Tobago Dollar</option>
+                            <option value="TWD" data-decimals="2">TWD - New Taiwan Dollar</option>
+                            <option value="TZS" data-decimals="2">TZS - Tanzanian Shilling</option>
+                            <option value="UAH" data-decimals="2">UAH - Ukraine Hryvnia</option>
+                            <option value="UGX" data-decimals="0">UGX - Uganda Shilling</option>
+                            <option value="USD" data-decimals="2">USD - US Dollars</option>
+                            <option value="UYU" data-decimals="2">UYU - Peso Uruguayo</option>
+                            <option value="UZS" data-decimals="2">UZS - Uzbekistani Som</option>
+                            <option value="VEF" data-decimals="2">VEF - Venezuelan Bolívar</option>
+                            <option value="VND" data-decimals="0">VND - Vietnamese New Dong</option>
+                            <option value="VUV" data-decimals="0">VUV - Vanuatu Vatu</option>
+                            <option value="WST" data-decimals="2">WST - Samoan Tala</option>
+                            <option value="XAF" data-decimals="0">XAF - CFA Franc BEAC</option>
+                            <option value="XCG" data-decimals="2">XCG - Caribbean Guilder</option>
+                            <option value="XCD" data-decimals="2">XCD - East Caribbean Dollar</option>
+                            <option value="XOF" data-decimals="0">XOF - CFA Franc BCEAO</option>
+                            <option value="XPF" data-decimals="0">XPF - CFP Franc</option>
+                            <option value="YER" data-decimals="2">YER - Yemeni Rial</option>
+                            <option value="ZAR" data-decimals="2">ZAR - South African Rand</option>
+                            <option value="ZMW" data-decimals="2">ZMW - Zambian Kwacha</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="font-size: 12px; color: #888;">
+                Note: for zero-decimal currencies (e.g. JPY, KRW) enter a whole number; for three-decimal currencies (e.g. BHD, KWD, OMR) you can enter up to 3 decimal places. The amount is converted to Adyen's minor units automatically based on the selected currency.
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country</label>
+                <select id="country">
+                    <option value="NL">Netherlands</option>
+                    <option value="US">United States</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="DE">Germany</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="shopperEmail">Shopper Email (optional)</label>
+                <input type="email" id="shopperEmail" placeholder="shopper@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="shopperReference">Shopper Reference (optional)</label>
+                <input type="text" id="shopperReference" placeholder="SHOPPER_123">
+            </div>
+
+            <button id="create-session-btn" onclick="createSession()">Create Payment Session</button>
+        </div>
+
+        <div id="dropin-container" class="hidden">
+            <div class="loading">Loading payment methods...</div>
+        </div>
+
+        <div id="result-section" class="hidden">
+            <div class="info-section">
+                <h3>Payment Result</h3>
+                <div class="info-item">
+                    <span class="info-label">Result Code:</span>
+                    <span class="info-value" id="result-code">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">PSP Reference:</span>
+                    <span class="info-value" id="psp-reference">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Merchant Reference:</span>
+                    <span class="info-value" id="merchant-reference">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Amount:</span>
+                    <span class="info-value" id="result-amount">-</span>
+                </div>
+            </div>
+
+            <div class="session-info">
+                <strong>Session ID:</strong> <span id="session-id">-</span><br>
+                <strong>Status:</strong> <span id="session-status">-</span>
+            </div>
+
+            <div id="action-section" class="hidden" style="margin-top: 20px;">
+                <div class="amount-row">
+                    <button id="capture-btn" onclick="captureAuthorisedPayment()" style="background: #2e7d32;">Capture</button>
+                    <button id="cancel-btn" onclick="cancelAuthorisedPayment()" style="background: #c62828;">Cancel</button>
+                    <button id="refund-btn" onclick="refundCapturedPayment()" style="background: #1565c0;" class="hidden">Refund</button>
+                </div>
+
+                <div id="action-status" class="session-info hidden" style="margin-top: 15px;"></div>
+                <button id="check-status-btn" onclick="manualCheckModificationStatus()" class="hidden" style="margin-top: 10px; background: #667eea;">Check status now</button>
+            </div>
+
+            <button onclick="resetForm()" style="margin-top: 20px;">Start New Payment</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Using the npm package directly (no CDN, no bundler). @adyen/adyen-web's
+        // dist files use only relative internal imports, so http-server can
+        // serve node_modules statically and the browser resolves this natively
+        // as long as the script itself is type="module".
+        // '/auto' auto-registers all payment method components onto Dropin,
+        // matching Adyen's own recommended npm usage — avoids having to
+        // manually import and register each individual payment method.
+        import { AdyenCheckout, Dropin } from '/node_modules/@adyen/adyen-web/auto/auto.js';
+
+        console.log('Adyen Web loaded via npm import (auto bundle)');
+
+        const API_BASE_URL = 'http://localhost:3001'; // Backend is on port 3001
+        let currentSessionData = null;
+        let currentSessionId = null; // decoupled from currentSessionData so it survives the redirect flow, where currentSessionData is null on the fresh page load
+        let checkoutInstance = null;
+        let dropinInstance = null;
+        let currentPspReference = null; // needed by the Capture/Cancel actions below
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.classList.remove('hidden');
+            setTimeout(() => successDiv.classList.add('hidden'), 5000);
+        }
+
+        // Currency-aware minor-unit conversion (see
+        // https://docs.adyen.com/development-resources/currency-codes).
+        // Most currencies use 2 decimals, but some (JPY, KRW, ...) use 0 and
+        // others (BHD, KWD, OMR, ...) use 3 — treating every currency as
+        // 2-decimal would submit wildly wrong amounts for those.
+        //
+        // Primary source: the data-decimals attribute on the selected
+        // <option> in the currency dropdown (kept in sync with the option
+        // list itself). Fallback map covers cases where we only have a bare
+        // currency code string (e.g. amounts echoed back from the server in
+        // renderPaymentDetails) and the dropdown isn't the source.
+        const CURRENCY_DECIMALS_FALLBACK = {
+            BHD: 3, IQD: 3, JOD: 3, KWD: 3, LYD: 3, OMR: 3, TND: 3,
+            CVE: 0, DJF: 0, GNF: 0, IDR: 0, JPY: 0, KMF: 0, KRW: 0, PYG: 0,
+            RWF: 0, UGX: 0, VND: 0, VUV: 0, XAF: 0, XOF: 0, XPF: 0
+            // everything else defaults to 2, matching the vast majority of
+            // currencies in Adyen's table
+        };
+
+        function getCurrencyDecimals(currencyCode) {
+            const currencySelect = document.getElementById('currency');
+            const selectedOption = currencySelect?.querySelector(`option[value="${currencyCode}"]`);
+            if (selectedOption?.dataset.decimals !== undefined) {
+                return parseInt(selectedOption.dataset.decimals, 10);
+            }
+            return CURRENCY_DECIMALS_FALLBACK[currencyCode] ?? 2;
+        }
+
+        // Converts a shopper-entered amount (e.g. "10.50") into Adyen's
+        // minor-unit integer for the given currency.
+        function toMinorUnits(majorAmount, currencyCode) {
+            const decimals = getCurrencyDecimals(currencyCode);
+            return Math.round(majorAmount * Math.pow(10, decimals));
+        }
+
+        // Converts a minor-unit integer from Adyen back into a display string
+        // with the correct number of decimal places for that currency.
+        function formatMinorUnits(minorValue, currencyCode) {
+            const decimals = getCurrencyDecimals(currencyCode);
+            return (minorValue / Math.pow(10, decimals)).toFixed(decimals);
+        }
+
+        // Adjusts the amount input's step/placeholder to match the selected
+        // currency's decimal precision (0 for JPY/KRW, 3 for BHD/KWD/etc.),
+        // so the browser's number spinner behaves sensibly either way.
+        function updateAmountInputStep() {
+            const currency = document.getElementById('currency').value;
+            const decimals = getCurrencyDecimals(currency);
+            const step = decimals === 0 ? '1' : (1 / Math.pow(10, decimals)).toString();
+            const amountInput = document.getElementById('amount');
+            amountInput.step = step;
+            amountInput.placeholder = decimals === 0 ? 'e.g. 1000' : `e.g. ${(10).toFixed(decimals)}`;
+        }
+
+        async function createSession() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const currency = document.getElementById('currency').value;
+            const country = document.getElementById('country').value;
+            const shopperEmail = document.getElementById('shopperEmail').value;
+            const shopperReference = document.getElementById('shopperReference').value;
+
+            if (!amount || amount <= 0) {
+                showError('Please enter a valid amount');
+                return;
+            }
+
+            const button = document.getElementById('create-session-btn');
+            button.disabled = true;
+            button.textContent = 'Creating session...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: toMinorUnits(amount, currency),
+                        currency: currency,
+                        countryCode: country,
+                        reference: `ORDER_${Date.now()}`,
+                        shopperEmail: shopperEmail || undefined,
+                        shopperReference: shopperReference || undefined
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to create session');
+                }
+
+                currentSessionData = data;
+                currentSessionId = data.id;
+                console.log('Session created:', data);
+
+                // Hide form and show Drop-in
+                document.getElementById('payment-form').classList.add('hidden');
+                document.getElementById('dropin-container').classList.remove('hidden');
+
+                // Initialize Adyen Checkout
+                await initializeAdyenCheckout(data);
+
+            } catch (error) {
+                console.error('Error creating session:', error);
+                showError(`Error: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Create Payment Session';
+            }
+        }
+
+        async function initializeAdyenCheckout(sessionData) {
+            try {
+                console.log('Initializing Adyen Checkout with session:', sessionData);
+
+                // AdyenCheckout and Dropin are already available here as
+                // real imported bindings (see the import statement at the
+                // top of this module) — no runtime global to check for.
+
+                // Get client key from backend (more secure than hardcoding)
+                const clientKeyResponse = await fetch(`${API_BASE_URL}/api/config`);
+                const clientKeyData = await clientKeyResponse.json();
+                const clientKey = clientKeyData.clientKey || 'test_client_key_placeholder';
+
+                const configuration = {
+                    session: {
+                        id: sessionData.id,
+                        sessionData: sessionData.sessionData
+                    },
+                    environment: 'test',
+                    amount: {
+                        value: sessionData.amount.value,
+                        currency: sessionData.amount.currency
+                    },
+                    countryCode: sessionData.countryCode,
+                    locale: 'en-US',
+                    clientKey: clientKey,
+                    onPaymentCompleted: (result, component) => {
+                        console.log('Payment completed:', result);
+                        handlePaymentResult(result);
+                    },
+                    onPaymentFailed: (result, component) => {
+                        console.log('Payment failed:', result);
+                        handlePaymentResult(result);
+                    },
+                    onError: (error, component) => {
+                        console.error('Payment error:', error);
+                        showError(`Payment error: ${error.name} - ${error.message}`);
+                    }
+                };
+
+                checkoutInstance = await AdyenCheckout(configuration);
+
+                // Create and mount Drop-in
+                const dropinConfiguration = {
+                    openFirstPaymentMethod: true,
+                    showPaymentMethods: true
+                };
+
+                dropinInstance = new Dropin(checkoutInstance, dropinConfiguration)
+                    .mount('#dropin-container');
+
+                console.log('Drop-in initialized successfully');
+
+            } catch (error) {
+                console.error('Error initializing Adyen Checkout:', error);
+                showError(`Failed to initialize payment form: ${error.message}`);
+                document.getElementById('dropin-container').classList.add('hidden');
+                document.getElementById('payment-form').classList.remove('hidden');
+            }
+        }
+
+        // Renders the payment result fields into the DOM. Shared by both the
+        // Drop-in callback flow and the redirect-return flow below.
+        function renderPaymentDetails({ resultCode, pspReference, merchantReference, amount }) {
+            document.getElementById('result-code').textContent = resultCode || 'Unknown';
+            document.getElementById('psp-reference').textContent = pspReference || 'N/A';
+            document.getElementById('merchant-reference').textContent = merchantReference || 'N/A';
+
+            if (amount?.value != null && amount?.currency) {
+                document.getElementById('result-amount').textContent =
+                    `${formatMinorUnits(amount.value, amount.currency)} ${amount.currency}`;
+            } else {
+                document.getElementById('result-amount').textContent = 'N/A';
+            }
+
+            document.getElementById('session-status').textContent = resultCode || 'Unknown';
+
+            // Capture/Cancel only make sense on an authorised, uncaptured payment.
+            const actionSection = document.getElementById('action-section');
+            if (resultCode === 'Authorised') {
+                actionSection.classList.remove('hidden');
+                showSuccess('Payment completed successfully!');
+            } else {
+                actionSection.classList.add('hidden');
+                showError(`Payment ${resultCode}`);
+            }
+        }
+
+        async function handlePaymentResult(result) {
+            // Unmount Drop-in
+            if (dropinInstance) {
+                dropinInstance.unmount();
+            }
+
+            document.getElementById('dropin-container').classList.add('hidden');
+            document.getElementById('result-section').classList.remove('hidden');
+            document.getElementById('session-id').textContent = currentSessionId || 'N/A';
+
+            // The merchant reference and amount were already known when we
+            // created the session — no need to re-fetch them. Adyen's
+            // /sessions/{id}?sessionResult=... endpoint on the current API
+            // version only returns { id, status }, not the full payment
+            // details, so we don't rely on it for these fields.
+            renderPaymentDetails({
+                resultCode: result.resultCode,
+                merchantReference: currentSessionData?.reference,
+                amount: currentSessionData?.amount,
+                pspReference: null // filled in below, if the webhook has arrived
+            });
+
+            // The pspReference is only known once Adyen sends the AUTHORISATION
+            // webhook to your backend (see /api/webhooks in server.js). That
+            // requires a publicly reachable webhook URL (e.g. via ngrok) to be
+            // registered in your Adyen test Customer Area. Poll briefly for it.
+            if (!currentSessionId) return;
+
+            const pspReference = await pollForPspReference(currentSessionId);
+            if (pspReference) {
+                document.getElementById('psp-reference').textContent = pspReference;
+                currentPspReference = pspReference;
+            } else {
+                document.getElementById('psp-reference').textContent =
+                    'N/A (webhook not received — see console)';
+                console.warn(
+                    'No webhook data received for this session yet. ' +
+                    'PSP reference requires Adyen to deliver an AUTHORISATION webhook to ' +
+                    `${API_BASE_URL}/api/webhooks. If you're testing locally, expose your ` +
+                    'backend with a tool like ngrok and register that URL as a webhook ' +
+                    'in your Adyen test Customer Area (Developers > Webhooks).'
+                );
+                // Without a pspReference, capture/cancel can't be requested —
+                // hide the buttons rather than let them fail silently.
+                document.getElementById('action-section').classList.add('hidden');
+            }
+        }
+
+        // Polls the backend's stored session (populated by the webhook handler)
+        // for a pspReference, retrying a few times since the webhook can arrive
+        // shortly after the payment result callback fires.
+        async function pollForPspReference(sessionId, attempts = 15, delayMs = 1000) {
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`);
+                    if (response.ok) {
+                        const session = await response.json();
+                        const psp = session.webhookData?.pspReference;
+                        if (psp) return psp;
+                    }
+                } catch (error) {
+                    console.error('Error polling for webhook data:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+            return null;
+        }
+
+        // Polls the backend's stored session for the outcome of a capture or
+        // cancel request, which — like the original authorisation — arrives
+        // asynchronously via webhook (CAPTURE / CANCELLATION events).
+        async function pollForModificationOutcome(sessionId, statusField, attempts = 60, delayMs = 1000) {
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`);
+                    if (response.ok) {
+                        const session = await response.json();
+                        if (session[statusField] && session[statusField] !== 'pending') {
+                            return session[statusField]; // 'success' or 'failed'
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling for modification outcome:', error);
+                }
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+            return null; // webhook hasn't arrived within the polling window
+        }
+
+        function showActionStatus(message) {
+            const el = document.getElementById('action-status');
+            el.textContent = message;
+            el.classList.remove('hidden');
+        }
+
+        function setActionButtonsDisabled(disabled) {
+            document.getElementById('capture-btn').disabled = disabled;
+            document.getElementById('cancel-btn').disabled = disabled;
+            document.getElementById('refund-btn').disabled = disabled;
+        }
+
+        // Shared label/verb lookup so capture/cancel/refund status messages
+        // stay consistent across the poll, manual-check, and button handlers.
+        const MODIFICATION_LABELS = {
+            captureStatus: { label: 'Capture', verb: 'captured' },
+            cancelStatus: { label: 'Cancellation', verb: 'cancelled' },
+            refundStatus: { label: 'Refund', verb: 'refunded' }
+        };
+
+        // A captured payment can no longer be cancelled — only refunded.
+        // Swap the buttons once capture is confirmed.
+        function showRefundInsteadOfCancel() {
+            document.getElementById('cancel-btn').classList.add('hidden');
+            document.getElementById('refund-btn').classList.remove('hidden');
+        }
+
+        // Tracks which modification (captureStatus or cancelStatus) is
+        // currently awaited, so the manual "Check status now" button knows
+        // what to look for if the automatic polling window times out.
+        let pendingModificationField = null;
+
+        async function manualCheckModificationStatus() {
+            if (!pendingModificationField || !currentSessionId) return;
+
+            const button = document.getElementById('check-status-btn');
+            button.disabled = true;
+            button.textContent = 'Checking...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/sessions/${currentSessionId}`);
+                if (response.ok) {
+                    const session = await response.json();
+                    const outcome = session[pendingModificationField];
+                    const { label: actionLabel, verb } = MODIFICATION_LABELS[pendingModificationField];
+
+                    if (outcome === 'success') {
+                        showActionStatus(`✅ ${actionLabel} confirmed.`);
+                        showSuccess(`Payment ${verb} successfully!`);
+                        button.classList.add('hidden');
+                        if (pendingModificationField === 'captureStatus') {
+                            showRefundInsteadOfCancel();
+                        }
+                        pendingModificationField = null;
+                    } else if (outcome === 'failed') {
+                        showActionStatus(`❌ ${actionLabel} failed. Check the backend logs for details.`);
+                        showError(`${actionLabel} failed.`);
+                        button.classList.add('hidden');
+                        pendingModificationField = null;
+                    } else {
+                        showActionStatus(
+                            `⏳ Still waiting — the ${actionLabel.toLowerCase()} webhook hasn't arrived yet. ` +
+                            'Check your backend logs, or click this button again in a moment.'
+                        );
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking modification status:', error);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Check status now';
+            }
+        }
+
+        async function captureAuthorisedPayment() {
+            if (!currentPspReference) {
+                showError('No PSP reference available yet — cannot capture.');
+                return;
+            }
+
+            setActionButtonsDisabled(true);
+            document.getElementById('check-status-btn').classList.add('hidden');
+            showActionStatus('Requesting capture...');
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/api/payments/${currentPspReference}/capture`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sessionId: currentSessionId,
+                            amount: currentSessionData?.amount // omitted on the redirect flow — backend falls back to the stored session amount
+                        })
+                    }
+                );
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Capture request failed');
+                }
+
+                console.log('Capture request accepted:', data);
+                pendingModificationField = 'captureStatus';
+                // Adyen's test webhooks (especially over a local tunnel like
+                // ngrok) can take anywhere from a few seconds up to roughly a
+                // minute to arrive. Re-enable the buttons immediately so the
+                // UI doesn't feel stuck, and poll in the background.
+                setActionButtonsDisabled(false);
+                showActionStatus('Capture requested — waiting for confirmation from Adyen (this can take up to a minute)...');
+
+                const outcome = await pollForModificationOutcome(currentSessionId, 'captureStatus');
+                if (outcome === 'success') {
+                    showActionStatus('✅ Capture confirmed.');
+                    showSuccess('Payment captured successfully!');
+                    showRefundInsteadOfCancel(); // a captured payment can only be refunded now, not cancelled
+                    pendingModificationField = null;
+                } else if (outcome === 'failed') {
+                    showActionStatus('❌ Capture failed. Check the backend logs for details.');
+                    showError('Capture failed.');
+                    pendingModificationField = null;
+                } else {
+                    showActionStatus(
+                        '⏳ Capture requested, but no confirmation webhook received within a minute. ' +
+                        'This is often just delayed delivery over ngrok/test infrastructure — check your ' +
+                        'backend logs, or use the button below to check again.'
+                    );
+                    document.getElementById('check-status-btn').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error requesting capture:', error);
+                showActionStatus(`❌ Error: ${error.message}`);
+                showError(`Capture error: ${error.message}`);
+                setActionButtonsDisabled(false);
+            }
+        }
+
+        async function cancelAuthorisedPayment() {
+            if (!currentPspReference) {
+                showError('No PSP reference available yet — cannot cancel.');
+                return;
+            }
+
+            setActionButtonsDisabled(true);
+            document.getElementById('check-status-btn').classList.add('hidden');
+            showActionStatus('Requesting cancellation...');
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/api/payments/${currentPspReference}/cancel`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId: currentSessionId })
+                    }
+                );
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Cancel request failed');
+                }
+
+                console.log('Cancel request accepted:', data);
+                pendingModificationField = 'cancelStatus';
+                setActionButtonsDisabled(false);
+                showActionStatus('Cancellation requested — waiting for confirmation from Adyen (this can take up to a minute)...');
+
+                const outcome = await pollForModificationOutcome(currentSessionId, 'cancelStatus');
+                if (outcome === 'success') {
+                    showActionStatus('✅ Cancellation confirmed.');
+                    showSuccess('Payment cancelled successfully!');
+                    pendingModificationField = null;
+                } else if (outcome === 'failed') {
+                    showActionStatus('❌ Cancellation failed. Check the backend logs for details.');
+                    showError('Cancellation failed.');
+                    pendingModificationField = null;
+                } else {
+                    showActionStatus(
+                        '⏳ Cancellation requested, but no confirmation webhook received within a minute. ' +
+                        'This is often just delayed delivery over ngrok/test infrastructure — check your ' +
+                        'backend logs, or use the button below to check again.'
+                    );
+                    document.getElementById('check-status-btn').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error requesting cancellation:', error);
+                showActionStatus(`❌ Error: ${error.message}`);
+                showError(`Cancel error: ${error.message}`);
+            } finally {
+                setActionButtonsDisabled(false);
+            }
+        }
+
+        async function refundCapturedPayment() {
+            if (!currentPspReference) {
+                showError('No PSP reference available yet — cannot refund.');
+                return;
+            }
+
+            setActionButtonsDisabled(true);
+            document.getElementById('check-status-btn').classList.add('hidden');
+            showActionStatus('Requesting refund...');
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/api/payments/${currentPspReference}/refund`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sessionId: currentSessionId,
+                            amount: currentSessionData?.amount // omitted on the redirect flow — backend falls back to the stored session amount
+                        })
+                    }
+                );
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Refund request failed');
+                }
+
+                console.log('Refund request accepted:', data);
+                pendingModificationField = 'refundStatus';
+                setActionButtonsDisabled(false);
+                showActionStatus('Refund requested — waiting for confirmation from Adyen (this can take up to a minute)...');
+
+                const outcome = await pollForModificationOutcome(currentSessionId, 'refundStatus');
+                if (outcome === 'success') {
+                    showActionStatus('✅ Refund confirmed.');
+                    showSuccess('Payment refunded successfully!');
+                    // Once refunded, no further action makes sense — hide the button.
+                    document.getElementById('refund-btn').classList.add('hidden');
+                    pendingModificationField = null;
+                } else if (outcome === 'failed') {
+                    showActionStatus('❌ Refund failed. Check the backend logs for details.');
+                    showError('Refund failed.');
+                    pendingModificationField = null;
+                } else {
+                    showActionStatus(
+                        '⏳ Refund requested, but no confirmation webhook received within a minute. ' +
+                        'This is often just delayed delivery over ngrok/test infrastructure — check your ' +
+                        'backend logs, or use the button below to check again.'
+                    );
+                    document.getElementById('check-status-btn').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error requesting refund:', error);
+                showActionStatus(`❌ Error: ${error.message}`);
+                showError(`Refund error: ${error.message}`);
+            } finally {
+                setActionButtonsDisabled(false);
+            }
+        }
+
+        function resetForm() {
+            // Reset form state
+            document.getElementById('result-section').classList.add('hidden');
+            document.getElementById('payment-form').classList.remove('hidden');
+            document.getElementById('dropin-container').classList.add('hidden');
+            document.getElementById('dropin-container').innerHTML = '<div class="loading">Loading payment methods...</div>';
+
+            // Clear messages
+            document.getElementById('error-message').classList.add('hidden');
+            document.getElementById('success-message').classList.add('hidden');
+
+            // Reset form values
+            document.getElementById('amount').value = '10.00';
+            document.getElementById('shopperEmail').value = '';
+            document.getElementById('shopperReference').value = '';
+
+            // Clear session data
+            currentSessionData = null;
+            currentSessionId = null;
+            currentPspReference = null;
+            checkoutInstance = null;
+            dropinInstance = null;
+            document.getElementById('action-section').classList.add('hidden');
+            document.getElementById('action-status').classList.add('hidden');
+            // Restore default button visibility (Capture + Cancel; Refund
+            // only reappears after a fresh capture in the next payment).
+            document.getElementById('cancel-btn').classList.remove('hidden');
+            document.getElementById('refund-btn').classList.add('hidden');
+        }
+
+        // Handle redirect result if returning from payment
+        window.addEventListener('load', async () => {
+            updateAmountInputStep(); // set correct step/placeholder for the default selected currency
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('sessionId');
+            const redirectResult = urlParams.get('redirectResult');
+
+            if (sessionId && redirectResult) {
+                console.log('Handling redirect result:', { sessionId, redirectResult });
+
+                try {
+                    // Get session status from backend (confirms the payment
+                    // outcome). Note: on the current Checkout API version this
+                    // only returns { id, status } — not payment details.
+                    const response = await fetch(
+                        `${API_BASE_URL}/api/sessions/${sessionId}/result?sessionResult=${redirectResult}`
+                    );
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // Show the result section directly — Drop-in was never
+                        // mounted on this fresh page load after the redirect.
+                        document.getElementById('dropin-container').classList.add('hidden');
+                        document.getElementById('payment-form').classList.add('hidden');
+                        document.getElementById('result-section').classList.remove('hidden');
+                        document.getElementById('session-id').textContent = sessionId;
+                        currentSessionId = sessionId;
+
+                        const resultCode = result.status === 'completed' ? 'Authorised' : result.status;
+                        renderPaymentDetails({ resultCode });
+
+                        // merchantReference and amount were known client-side
+                        // before the redirect, but that state doesn't survive
+                        // a full page navigation in this demo. Only pspReference
+                        // is recoverable here, via the webhook (if received).
+                        // (The backend can still capture/cancel without the
+                        // amount, since it falls back to the amount stored
+                        // when the session was created.)
+                        const pspReference = await pollForPspReference(sessionId);
+                        if (pspReference) {
+                            document.getElementById('psp-reference').textContent = pspReference;
+                            currentPspReference = pspReference;
+                        } else {
+                            document.getElementById('psp-reference').textContent =
+                                'N/A (webhook not received — see console)';
+                            document.getElementById('action-section').classList.add('hidden');
+                        }
+                    } else {
+                        showError('Failed to retrieve payment result');
+                    }
+                } catch (error) {
+                    console.error('Error handling redirect:', error);
+                    showError('Failed to process payment result');
+                }
+            }
+        });
+
+        // Expose functions referenced by inline onclick/onchange attributes in
+        // this HTML. Required because this script is type="module" (needed
+        // for the `import` statement above) — top-level functions in a module
+        // are scoped to the module, not attached to `window` automatically,
+        // so inline HTML event handlers can't find them without this.
+        window.createSession = createSession;
+        window.resetForm = resetForm;
+        window.captureAuthorisedPayment = captureAuthorisedPayment;
+        window.cancelAuthorisedPayment = cancelAuthorisedPayment;
+        window.refundCapturedPayment = refundCapturedPayment;
+        window.manualCheckModificationStatus = manualCheckModificationStatus;
+        window.updateAmountInputStep = updateAmountInputStep;
+    </script>
+</body>
+
+</html>
